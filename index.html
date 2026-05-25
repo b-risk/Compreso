@@ -69,63 +69,63 @@
                     <input type="checkbox" id="ligatures" class="category-toggle" checked>
                     <label for="ligatures">
                         <span class="category-name">Ligatures</span>
-                        <span class="category-desc">Combined characters, example: ae >> æ (Recommended).</span>
+                        <span class="category-desc">Standard Unicode ligatures. Combines common letter pairs into single characters like 'ae' → 'æ', 'ffi' → 'ﬃ'.</span>
                     </label>
                 </div>
                 <div class="category-card">
                     <input type="checkbox" id="compounds" class="category-toggle">
                     <label for="compounds">
                         <span class="category-name">Compounds</span>
-                        <span class="category-desc">Combined characters with minor defect(s), example: th >> ᵺ (Recommended with larger text).</span>
+                        <span class="category-desc">Experimental combined characters that may have minor rendering defects in some fonts. Example: 'th' → 'ᵺ'.</span>
                     </label>
                 </div>
                 <div class="category-card">
                     <input type="checkbox" id="nonalph" class="category-toggle" checked>
                     <label for="nonalph">
-                        <span class="category-name">Non-alphabetic</span>
-                        <span class="category-desc">Non-alphabetical combined characters. example 1. 2/3 >> ⅔ (Recommended).</span>
+                        <span class="category-name">Fractions &amp; Symbols</span>
+                        <span class="category-desc">Replaces fractions, punctuation combos, and common symbols. Example: '1/2' → '½', '!!' → '‼'.</span>
                     </label>
                 </div>
                 <div class="category-card">
                     <input type="checkbox" id="capitals" class="category-toggle" checked>
                     <label for="capitals">
                         <span class="category-name">Case Sensitivity</span>
-                        <span class="category-desc">When enabled, only exact case matches. When disabled, tries lowercase variants.</span>
+                        <span class="category-desc">When enabled, only exact case matches are compressed. When disabled, tries both cases for uppercase entries.</span>
                     </label>
                 </div>
                 <div class="category-card">
                     <input type="checkbox" id="cjkcomp" class="category-toggle">
                     <label for="cjkcomp">
                         <span class="category-name">CJK Comp</span>
-                        <span class="category-desc">CJK compatibility characters that look like Latin letters (e.g., 'MG' → '㎎'). Works with Capitals for case-insensitive matching.</span>
+                        <span class="category-desc">CJK compatibility characters that visually resemble Latin letters (e.g., 'mg' → '㎎', 'ltd' → '㋏'). Enable Case Sensitivity for strict matching.</span>
                     </label>
                 </div>
                 <div class="category-card">
                     <input type="checkbox" id="addfixchr" class="category-toggle">
                     <label for="addfixchr">
                         <span class="category-name">Add Fix Chr</span>
-                        <span class="category-desc">[EXPERIMENTAL] Adds a special character at the start of the text.</span>
+                        <span class="category-desc">[EXPERIMENTAL] Prepends an invisible zero-width character that fixes CJK character rendering in some fonts. Shows a blue indicator when active.</span>
                     </label>
                 </div>
                 <div class="category-card">
                     <input type="checkbox" id="emojify" class="category-toggle" checked>
                     <label for="emojify">
                         <span class="category-name">Emojify</span>
-                        <span class="category-desc">Replaces formatted words with emojis, example: ':cat2:' >> 🐱</span>
+                        <span class="category-desc">Replaces emoji shortcodes with actual Unicode emoji characters. Example: ':cat:' → '🐱', ':fire:' → '🔥'.</span>
                     </label>
                 </div>
                 <div class="category-card">
                     <input type="checkbox" id="wrds2sym" class="category-toggle" checked>
                     <label for="wrds2sym">
-                        <span class="category-name">Wrds2Sym</span>
-                        <span class="category-desc">Converts words into symbols, example: 'equals' >> =</span>
+                        <span class="category-name">Words to Symbols</span>
+                        <span class="category-desc">Replaces common words with their symbolic equivalents. Example: 'equals' → '=', 'percent' → '%'.</span>
                     </label>
                 </div>
                 <div class="category-card">
                     <input type="checkbox" id="wrds2num" class="category-toggle">
                     <label for="wrds2num">
-                        <span class="category-name">Wrds2Num</span>
-                        <span class="category-desc">[EXPERIMENTAL] Converts given text input into numbers.</span>
+                        <span class="category-name">Words to Numbers</span>
+                        <span class="category-desc">[EXPERIMENTAL] Converts written-out numbers to digits. Example: 'one' → '1', 'twenty' → '20'.</span>
                     </label>
                 </div>
             </div>

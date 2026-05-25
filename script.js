@@ -24,10 +24,9 @@ const ligatureDict = {
   'ls': 'ʪ', 'IL': 'Ỻ', 'lj': 'ǉ', 'Lj': 'ǈ', 'LJ': 'Ǉ',
   'nj': 'ǌ', 'Nj': 'ǋ', 'NJ': 'Ǌ',
   'oe': 'œ', 'oy': 'ѹ', 'Oy': 'Ѹ', 'OE': 'Œ', 'oo': 'ꝏ', 'OO': 'Ꝏ',
-  'th': 'ᵺ', 'ff': 'ﬀ', 'ij': 'ĳ', 'fl': 'ﬂ', 'fi': 'ﬁ',
+  'ff': 'ﬀ', 'ij': 'ĳ', 'fl': 'ﬂ', 'fi': 'ﬁ',
   'ft': 'ﬅ', 'fn': 'ʩ', 'ffi': 'ﬃ', 'ffl': 'ﬄ',
-  'SP': '␠', 'NUL': '␀', 'DLE': '␐', 'SOH': '␁', 'DC1': '␑', 'DEL': '␡',
-  'll': '𐤚', 'lll': '𐤛', 'uu': 'ﬓ', 'uo': 'ꭣ', 'un': 'տ', 'ue': 'ᵫ',
+  'll': '𐤚', 'lll': '𐤛', 'uo': 'ꭣ', 'un': 'տ', 'ue': 'ᵫ',
   'IJ': 'Ĳ',   'qp': 'ȹ', 'db': 'ȸ', 'nn': 'm'
 };
 
@@ -52,6 +51,7 @@ const nonalphDict = {
 // Compounds dictionary
 const compoundsDict = {
   'th': 'ᵺ',
+  'uu': 'ﬓ',
   'st': 'ﬆ',
   'du': 'ԃ',
   'io': 'ю',
@@ -61,7 +61,8 @@ const compoundsDict = {
   'IO': 'Ю',
   'IA': 'Ѩ',
   'No': '№',
-  'DZ': 'Ǆ', 'Dz': 'ǅ', 'hu': 'ƕ', 'uh': 'ﬕ', 'Hb': 'Њ'
+  'DZ': 'Ǆ', 'Dz': 'ǅ', 'hu': 'ƕ', 'uh': 'ﬕ', 'Hb': 'Њ',
+  'SP': '␠', 'NUL': '␀', 'DLE': '␐', 'SOH': '␁', 'DC1': '␑', 'DEL': '␡',
 };
 
 
@@ -211,11 +212,19 @@ const emojifyDict = {
 
 // Wrds2Sym dictionary (words → symbols)
 const wrds2symDict = {
-  'equals': '=', 'equals to': '=', 'plus': '+', 'minus': '-', 'dash': '-',
-  'times': '×', 'divided by': '÷', 'percent': '%',
-  'and': '&', 'dollar': '$', 'pound': '£',
-  'number': '#', 'hash': '#', 'star': '*', 'asterisk': '*',
-  'question': '?', 'exclamation mark': '!'
+  'equals': '=', 
+  'equals to': '=', 
+  'plus': '+', 
+  'minus': '-', 
+  'dash': '-',
+  'times': '×', 
+  'divided by': '÷', 
+  'percent': '%',
+  'and': '&', 
+  'dollar': '$', 
+  'asterisk': '*',
+  'question mark': '?', 
+  'exclamation mark': '!'
 };
 
 // Wrds2Num parsing function [EXPERIMENTAL]
@@ -269,14 +278,17 @@ function compressText(input, enabledCategories) {
   }
 
   if (!enabledCategories['capitals']) {
-    // Case sensitivity OFF - add lowercase variants for uppercase-only keys
-    const lowercaseDict = {};
+    // Case sensitivity OFF: add both case variants for matching
+    const variantDict = {};
     for (const [key, value] of Object.entries(activeDict)) {
       if (key === key.toUpperCase() && key !== key.toLowerCase() && !activeDict[key.toLowerCase()]) {
-        lowercaseDict[key.toLowerCase()] = value;
+        variantDict[key.toLowerCase()] = value;
+      }
+      if (key === key.toLowerCase() && key !== key.toUpperCase() && !activeDict[key.toUpperCase()]) {
+        variantDict[key.toUpperCase()] = value;
       }
     }
-    Object.assign(activeDict, lowercaseDict);
+    Object.assign(activeDict, variantDict);
   }
 
   if (enabledCategories['cjkcomp']) {
@@ -426,7 +438,7 @@ function displayResult(result, limit) {
       compressionProgress.style.width = `${Math.min(Math.max(percentSaved, 0), 100)}%`;
     } else {
       statsText.textContent = !limit || limit === 0 ? 'Compress everything' : `Limit: ${limit}`;
-      compressionProgress.style.width = '100%';
+      compressionProgress.style.width = '0%';
     }
   }
 
@@ -504,6 +516,13 @@ function displayResult(result, limit) {
   }
 
   inputText.addEventListener('input', updateCompression);
+
+  const resizeObserver = new ResizeObserver(entries => {
+    for (const entry of entries) {
+      outputText.style.height = entry.target.style.height || 'auto';
+    }
+  });
+  resizeObserver.observe(inputText);
 
   const copyIcon = document.getElementById('copy-icon');
   if (copyIcon) {
