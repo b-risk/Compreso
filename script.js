@@ -8,7 +8,7 @@ const categoryDefinitions = [
   { id: 'ligatures', name: 'Ligatures', description: 'Combined characters, example: ae >> æ (Recommended).', default: true },
   { id: 'compounds', name: 'Compounds', description: 'Combined characters with minor defect(s), example: th >> ᵺ (Recommended with larger text).', default: false },
   { id: 'nonalph', name: 'Non-alphabetic', description: 'Non-alphabetical combined characters. example 1. 2/3 >> ⅔ (Recommended).', default: true },
-  { id: 'capitals', name: 'Capitals', description: 'Ignore capitals when replacing characters with no alternatives.', default: false },
+  { id: 'capitals', name: 'Case Sensitivity', description: 'When enabled, only matches exact case. When disabled, tries lowercase variants for uppercase text.', default: true },
   { id: 'cjkcomp', name: 'CJK Comp', description: 'Combined characters that may not render correctly like ligatures.', default: false },
   { id: 'addfixchr', name: 'Add Fix Chr', description: '[EXPERIMENTAL] Adds a special character at the start of the text.', default: false },
   { id: 'emojify', name: 'Emojify', description: 'Replaces formatted words with emojis, example: \':cat2:\' >> 🐱', default: true },
@@ -20,16 +20,15 @@ const categoryDefinitions = [
 const ligatureDict = {
   'ae': 'æ', 'ao': 'ꜵ', 'AO': '\uA734', 'AE': 'Æ', 'au': 'ꜷ', 'av': 'ꜹ', 'AV': 'Ꜹ',
   'ay': 'ꜽ', 'AY': 'Ꜽ', 'aa': 'ꜳ', 'AA': 'Ꜳ', 'AJ': 'Ꜷ', 'AU': 'Ꜷ',
-  'DZ': 'Ǆ', 'Dz': 'ǅ', 'dz': 'ʣ', 'hu': 'ƕ',
+  'dz': 'ʣ',
   'ls': 'ʪ', 'IL': 'Ỻ', 'lj': 'ǉ', 'Lj': 'ǈ', 'LJ': 'Ǉ',
-  'nj': 'ǌ', 'no': '№', 'No': '№', 'Nj': 'ǋ', 'NJ': 'Ǌ',
+  'nj': 'ǌ', 'Nj': 'ǋ', 'NJ': 'Ǌ',
   'oe': 'œ', 'oy': 'ѹ', 'Oy': 'Ѹ', 'OE': 'Œ', 'oo': 'ꝏ', 'OO': 'Ꝏ',
   'th': 'ᵺ', 'ff': 'ﬀ', 'ij': 'ĳ', 'fl': 'ﬂ', 'fi': 'ﬁ',
   'ft': 'ﬅ', 'fn': 'ʩ', 'ffi': 'ﬃ', 'ffl': 'ﬄ',
   'SP': '␠', 'NUL': '␀', 'DLE': '␐', 'SOH': '␁', 'DC1': '␑', 'DEL': '␡',
   'll': '𐤚', 'lll': '𐤛', 'uu': 'ﬓ', 'uo': 'ꭣ', 'un': 'տ', 'ue': 'ᵫ',
-  'uh': 'ﬕ', 'IJ': 'Ĳ',   'qp': 'ȹ', 'db': 'ȸ', 'nn': 'm',
-  'Hb': 'Њ'
+  'IJ': 'Ĳ',   'qp': 'ȹ', 'db': 'ȸ', 'nn': 'm'
 };
 
 // Space compression dictionary
@@ -55,70 +54,159 @@ const compoundsDict = {
   'th': 'ᵺ',
   'st': 'ﬆ',
   'du': 'ԃ',
+  'io': 'ю',
   'Hu': 'Ƕ',
   'IC': 'Ѥ',
   'TI': 'Ҵ',
   'IO': 'Ю',
-  'io': 'ю',
-  'IA': 'Ѩ'
+  'IA': 'Ѩ',
+  'No': '№',
+  'DZ': 'Ǆ', 'Dz': 'ǅ', 'hu': 'ƕ', 'uh': 'ﬕ', 'Hb': 'Њ'
 };
 
-// Capitals dictionary
-// Capitals feature dynamically generates case variants of active dictionary keys
-// No static mappings needed
-const capitalsDict = {
-};
+
 
 // CJK Comp dictionary (CJK compatibility characters - uppercase keys for case-insensitive matching)
 const cjkcompDict = {
-  'MG': '㎎',  // milligram
-  'KG': '㎏',  // kilogram
-  'KM': '喽',  // kilometer
-  'ML': '㎖',  // milliliter
-  'CD': '㏄',  // cubic centimeter
-  'LTD': '㋏', // limited (the "fix character")
-  'HV': '㋦',  // hectovolt
-  'PA': '㍶',  // pascal
-  'AU': '㍳',  // astronomical unit
-  'MM': '㎟',  // square millimeter
-  'CM': '㎠',  // square centimeter
-  'DM': '㎗',  // deciliter
-  'KL': '㎅',  // kilobyte
-  'MB': '㏔',  // megabyte
-  'GB': '㏊',  // gigabyte
-  'TB': '㏙',  // tablespoon
-  'MS': '㎳',  // millisecond
-  'NS': '㎱',  // nanosecond
-  'PS': '㎰',  // picosecond
-  'FS': '㎙',  // femtosecond
-  'AS': '㍱',  // atmosphere
-  'AM': '㉜',  // ante meridiem
-  'PM': '㉟',  // post meridiem
+  'mg': '㎎',  // milligram
+  'kg': '㎏',  // kilogram
+  'km': '㎞',  // kilometer
+  'cd': '㏅',
+  'cc': '㏄',  // cubic centimeter
+  'dm': '㍷',   // 
+  'pc': '㍶',  //
+  'mm': '㎜',  // 
+  'cm': '㎝',  //
+  'dm': '㍷',  // 
+  'mb': '㏔',  // megabyte
+  'ha': '㏊',
+  'ms': '㎳',  // millisecond
+  'ns': '㎱',  // nanosecond
+  'ps': '㎰',  // picosecond
+  'fm': '㎙',  // femtosecond
+  'ke': '㎘',
+  'me': '㎖',  // 
+  'de': '㎗',
+  'Pa': '㎩',
   'WC': '㏜',  // water closet
-  'DB': '㍴',  // decade
-  'PR': '㍷'   // percent
+  'AS': '',  // 
+  'AM': '',  // 
+  'PM': '',  // 
+  'Sv': '㏜',  // water closet
+  'WC': '',  // water closet
+  'DB': '',
+  'GB': '㎇',  // 
+  'KB': '㎅',  // kilobyte
+  'AU': '㍳',  // astronomical unit
+  'PR': '㏚',
+  'bar': '㍴',  // 
+  'hPa': '㍱',  // 
+  'PPM': '㏙',  //
+  'LTD': '㋏' // limited
 };
 
-// Add Fix Chr dictionary (experimental prefix)
-const addfixchrDict = {
-  '\u200C': '\u200C'
-};
+// Add Fix Chr (experimental prefix)
+const addfixchrPrefix = '\u200C';  // Zero-width non-joiner prepended to text
 
-// Emojify dictionary (GitHub-style shortcodes)
+// Emojify dictionary (GitHub-style shortcodes - 100+ entries)
 const emojifyDict = {
-  ':smile:': '😄', ':grin:': '😁', ':joy:': '😂', ':heart:': '❤️',
-  ':cat:': '🐱', ':cat2:': '🐱', ':dog:': '🐶', ':fox:': '🦊',
-  ':fire:': '🔥', ':100:': '💯', ':rocket:': '🚀', ':star:': '⭐',
-  ':+1:': '👍', ':clap:': '👏', ':wave:': '👋', ':ok:': '👌',
-  ':thinking:': '🤔', ':sunglasses:': '😎', ':party:': '🎉', ':gift:': '🎁',
-  ':bell:': '🔔', ':lock:': '🔒', ':key:': '🔑', ':pin:': '📌',
-  ':warning:': '⚠️', ':check:': '✅', ':x:': '❌', ':question:': '❓',
-  ':exclamation:': '❗', ':arrow_right:': '➡️', ':arrow_left:': '⬅️', ':arrow_up:': '⬆️',
-  ':arrow_down:': '⬇️', ':home:': '🏠', ':office:': '🏢', ':school:': '🏫',
-  ':computer:': '💻', ':phone:': '📱', ':email:': '📧', ':mail:': '✉️',
-  ':pencil:': '✏️', ':book:': '📖', ':page:': '📄', ':calendar:': '📅',
-  ':clock:': '🕐', ':money:': '💰', ':credit_card:': '💳', ':shopping:': '🛒',
-  ':coffee:': '☕', ':pizza:': '🍕', ':burger:': '🍔', ':ice_cream:': '🍨'
+  // Faces & emotions
+  ':smile:': '😄', ':grin:': '😁', ':joy:': '😂', ':rofl:': '🤣', ':smile_cat:': '😸',
+  ':smile:': '😊', ':slight_smile:': '🙂', ':neutral:': '😐', ':confused:': '😕',
+  ':angry:': '😠', ':rage:': '😡', ':cry:': '😢', ':sob:': '😭', ':tired:': '😫',
+  ':thinking:': '🤔', ':hmm:': '🤨', ':upsidedown:': '🙃', ':relieved:': '😌',
+  ':sleepy:': '😪', ':sleeping:': '😴', ':zzz:': '💤', ':dizzy:': '😵',
+  ':sunglasses:': '😎', ':smirk:': '😏', ':nerd:': '🤓', ':facepalm:': '🤦',
+  ':pray:': '🙏', ':clap:': '👏', ':wave:': '👋', ':thumbsup:': '👍', ':thumbsdown:': '👎',
+  ':ok:': '👌', ':punch:': '👊', ':fist:': '✊', ':v:': '✌️', ':metal:': '🤘',
+  ':point_right:': '👉', ':point_left:': '👈', ':point_up:': '👆', ':point_down:': '👇',
+  ':raised_hands:': '🙌', ':folded_hands:': '🤲',
+
+  // Hearts & love
+  ':heart:': '❤️', ':heart_decoration:': '💟', ':hearts:': '💕', ':brown_heart:': '🤎',
+  ':yellow_heart:': '💛', ':green_heart:': '💚', ':blue_heart:': '💙', ':purple_heart:': '💜',
+  ':pink_heart:': '💗', ':sparkling_heart:': '💖', ':heart_exclamation:': '❣️',
+
+  // Animals
+  ':cat:': '🐱', ':cat2:': '🐱', ':dog:': '🐶', ':fox:': '🦊', ':bear:': '🐻',
+  ':panda:': '🐼', ':koala:': '🐨', ':lion:': '🦁', ':tiger:': '🐯', ':tiger2:': '🐅',
+  ':leopard:': '🐆', ':horse:': '🐴', ':racehorse:': '🐎', ':unicorn:': '🦄',
+  ':cow:': '🐮', ':pig:': '🐷', ':boar:': '🐗', ':elephant:': '🐘', ':camel:': '🐪',
+  ':snake:': '🐍', ':lizard:': '🦎', ':frog:': '🐸', ':monkey:': '🐵', ':see_no_evil:': '🙈',
+  ':hear_no_evil:': '🙉', ':speak_no_evil:': '🙊', ':bird:': '🐦', ':chicken:': '🐔',
+  ':penguin:': '🐧', ':fish:': '🐟', ':dolphin:': '🐬', ':whale:': '🐳', ':shell:': '🐚',
+  ':bug:': '🐛', ':ant:': '🐜', ':bee:': '🐝', ':beetle:': '🪲', ':snail:': '🐌',
+  ':spider:': '🕷️', ':turtle:': '🐢', ':rabbit:': '🐰', ':rabbit2:': '🐇',
+
+  // Food & drinks
+  ':apple:': '🍎', ':green_apple:': '🍏', ':pear:': '🍐', ':peach:': '🍑', ':cherries:': '🍒',
+  ':strawberry:': '🍓', ':melon:': '🍈', ':watermelon:': '🍉', ':grapes:': '🍇',
+  ':banana:': '🍌', ':pineapple:': '🍍', ':tomato:': '🍅', ':eggplant:': '🍆',
+  ':corn:': '🌽', ':hot_pepper:': '🌶️', ':cucumber:': '🥒', ':carrot:': '🥕',
+  ':potato:': '🥔', ':sweet_potato:': '🍠', ':bread:': '🍞', ':croissant:': '🥐',
+  ':pizza:': '🍕', ':hamburger:': '🍔', ':fries:': '🍟', ':meat_on_bone:': '🍖',
+  ':poultry_leg:': '🍗', ':sushi:': '🍣', ':shrimp:': '🦐', ':rice:': '🍚',
+  ':ramen:': '🍜', ':spaghetti:': '🍝', ':bread:': '🍞', ':doughnut:': '🍩',
+  ':cookie:': '🍪', ':cake:': '🍰', ':pie:': '🥧', ':chocolate:': '🍫',
+  ':candy:': '🍬', ':lollipop:': '🍭', ':ice_cream:': '🍨', ':dango:': '🍡',
+  ':tea:': '🍵', ':coffee:': '☕', ':sake:': '🍶', ':beer:': '🍺', ':beers:': '🍻',
+  ':wine_glass:': '🍷', ':cocktail:': '🍸', ':tropical_drink:': '🍹', ':champagne:': '🥂',
+
+  // Objects
+  ':fire:': '🔥', ':sparkles:': '✨', ':star:': '⭐', ':star2:': '🌟', ':dizzy:': '💫',
+  ':boom:': '💥', ':collision:': '💥', ':implode:': '💣', ':bomb:': '💣',
+  ':100:': '💯', ':a:': '🅰️', ':b:': '🅱️', ':ab:': '🆎', ':cl:': '🆑',
+  ':ok:': '🆗', ':off:': '🔛', ':on:': '🔝', ':new:': '🆕', ':free:': '🆓',
+  ':key:': '🔑', ':lock:': '🔒', ':unlock:': '🔓', ':gun:': '🔫', ':knife:': '🔪',
+  ':coffee:': '☕', ':闹钟:': '⏰', ':clock:': '🕐', ':hourglass:': '⏳',
+  ':watch:': '⌚', ':timer:': '⏱️', ':compass:': '🧭', ':anchor:': '⚓',
+  ':satellite:': '🛰️', ':rocket:': '🚀', ':airplane:': '✈️', ':car:': '🚗',
+  ':taxi:': '🚕', ':bus:': '🚌', ':trolleybus:': '🚎', ':train:': '🚃',
+  ':ship:': '🚢', ':motorboat:': '🛥️', ':bike:': '🚲', ':motorcycle:': '🏍️',
+  ':ambulance:': '🚑', ':fire_engine:': '🚒', ':police_car:': '🚓', ':tractor:': '🚜',
+
+  // Symbols & misc
+  ':check:': '✅', ':x:': '❌', ':negative_squared_cross_mark:': '❎',
+  ':question:': '❓', ':exclamation:': '❗', ':grey_exclamation:': '❕',
+  ':information_source:': 'ℹ️', ':arrow_forward:': '▶️', ':arrow_backward:': '◀️',
+  ':arrow_up:': '⬆️', ':arrow_down:': '⬇️', ':arrow_right:': '➡️', ':arrow_left:': '⬅️',
+  ':arrow_upper_right:': '↗️', ':arrow_upper_left:': '↖️', ':arrow_lower_right:': '↘️',
+  ':arrow_lower_left:': '↙️', ':arrows_counterclockwise:': '🔄', ':arrows_clockwise:': '🔃',
+  ':hash:': '#️⃣', ':keycap_star:': '*️⃣', ':zero:': '0️⃣', ':one:': '1️⃣',
+  ':two:': '2️⃣', ':three:': '3️⃣', ':four:': '4️⃣', ':five:': '5️⃣',
+  ':six:': '6️⃣', ':seven:': '7️⃣', ':eight:': '8️⃣', ':nine:': '9️⃣',
+  ':copyright:': '©️', ':registered:': '®️', ':tm:': '™️', ':wavy_dash:': '〰️',
+  ':wave:': '〰️', ':umbrella:': '☂️', ':snowflake:': '❄️', ':cloud:': '☁️',
+  ':sunny:': '☀️', ':partly_sunny:': '⛅', ':cloudy:': '☁️', ':thunder_cloud_rain:': '⛈️',
+  ':rain:': '🌧️', ':snow:': '🌨️', ':fog:': '🌫️', ':wind_face:': '🌬️',
+  ':cyclone:': '🌀', ':foggy:': '🌁', ':rainbow:': '🌈', ':earth_americas:': '🌎',
+  ':globe_with_meridians:': '🌐', ':mount_fuji:': '🗻', ':volcano:': '🌋',
+  ':milky_way:': '🌌', ':space_invader:': '👾', ':video_game:': '🎮',
+  ':game_die:': '🎲', ':dart:': '🎯', ':8ball:': '🎱', ':bowling:': '🎳',
+
+  // Places
+  ':house:': '🏠', ':house_with_garden:': '🏡', ':school:': '🏫', ':office:': '🏢',
+  ':hospital:': '🏥', ':bank:': '🏦', ':hotel:': '🏨', ':love_hotel:': '🏩',
+  ':convenience_store:': '🏪', ':school:': '🏫', ':department_store:': '🏬',
+  ':wedding:': '💒', ':classical_building:': '🏛️', ':church:': '⛪',
+  ':mosque:': '🕌', ':synagogue:': '🕍', ':shinto_shrine:': '⛩️',
+  ':castle:': '🏰', ':rainbow:': '🌈',
+
+  // Tech & tools
+  ':computer:': '💻', ':laptop:': '💻', ':keyboard:': '⌨️', ':mouse:': '🖱️',
+  ':trackball:': '🖲️', ':desktop:': '🖥️', ':printer:': '🖨️', ':phone:': '📱',
+  ':telephone:': '📞', ':fax:': '📠', ':pager:': '📟', ':tv:': '📺',
+  ':radio:': '📻', ':camera:': '📷', ':video_camera:': '📹', ':movie_camera:': '🎥',
+  ':projector:': '📽️', ':film_frames:': '🎞️', ':telephone_receiver:': '📞',
+  ':punch_card:': '🃏', ':calendar:': '📅', ':calendar_page:': '📆',
+  ':spiral_calendar:': '🗓️', ':book:': '📖', ':open_book:': '📖', ':notebook:': '📓',
+  ':page_facing_up:': '📄', ':newspaper:': '📰', ':bookmark:': '🔖',
+  ':pencil:': '✏️', ':pen:': '🖊️', ':paintbrush:': '🖌️', ':crayon:': '🖍️',
+
+  // Money
+  ':moneybag:': '💰', ':dollar:': '💵', ':yen:': '💴', ':pound:': '💷',
+  ':euro:': '💶', ':credit_card:': '💳', ':money_with_wings:': '💸',
+  ':chart_increasing:': '📈', ':chart_decreasing:': '📉', ':shopping_cart:': '🛒'
 };
 
 // Wrds2Sym dictionary (words → symbols)
@@ -180,14 +268,15 @@ function compressText(input, enabledCategories) {
     Object.assign(activeDict, nonalphDict);
   }
 
-  if (enabledCategories['capitals']) {
-    const caseInsensitiveDict = {};
+  if (!enabledCategories['capitals']) {
+    // Case sensitivity OFF - add lowercase variants for uppercase-only keys
+    const lowercaseDict = {};
     for (const [key, value] of Object.entries(activeDict)) {
-      if (key === key.toLowerCase() && !activeDict[key.toUpperCase()]) {
-        caseInsensitiveDict[key.toUpperCase()] = value;
+      if (key === key.toUpperCase() && key !== key.toLowerCase() && !activeDict[key.toLowerCase()]) {
+        lowercaseDict[key.toLowerCase()] = value;
       }
     }
-    Object.assign(activeDict, caseInsensitiveDict);
+    Object.assign(activeDict, lowercaseDict);
   }
 
   if (enabledCategories['cjkcomp']) {
@@ -207,7 +296,7 @@ function compressText(input, enabledCategories) {
 
   // Add Fix Chr
   if (enabledCategories['addfixchr']) {
-    text = Object.values(addfixchrDict)[0] + text;
+    text = addfixchrPrefix + text;
   }
 
   // Emojify
