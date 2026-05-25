@@ -20,15 +20,16 @@ const categoryDefinitions = [
 const ligatureDict = {
   'ae': 'æ', 'ao': 'ꜵ', 'AO': '\uA734', 'AE': 'Æ', 'au': 'ꜷ', 'av': 'ꜹ', 'AV': 'Ꜹ',
   'ay': 'ꜽ', 'AY': 'Ꜽ', 'aa': 'ꜳ', 'AA': 'Ꜳ', 'AJ': 'Ꜷ', 'AU': 'Ꜷ',
-  'DZ': 'Ǆ', 'Dz': 'ǅ', 'dz': 'ʣ', 'du': 'ԃ', 'hu': 'ƕ', 'Hu': 'Ƕ',
+  'DZ': 'Ǆ', 'Dz': 'ǅ', 'dz': 'ʣ', 'hu': 'ƕ',
   'ls': 'ʪ', 'IL': 'Ỻ', 'lj': 'ǉ', 'Lj': 'ǈ', 'LJ': 'Ǉ',
   'nj': 'ǌ', 'no': '№', 'No': '№', 'Nj': 'ǋ', 'NJ': 'Ǌ',
   'oe': 'œ', 'oy': 'ѹ', 'Oy': 'Ѹ', 'OE': 'Œ', 'oo': 'ꝏ', 'OO': 'Ꝏ',
-  'th': 'ᵺ', 'st': 'ﬆ', 'ff': 'ﬀ', 'ij': 'ĳ', 'fl': 'ﬂ', 'fi': 'ﬁ',
+  'th': 'ᵺ', 'ff': 'ﬀ', 'ij': 'ĳ', 'fl': 'ﬂ', 'fi': 'ﬁ',
   'ft': 'ﬅ', 'fn': 'ʩ', 'ffi': 'ﬃ', 'ffl': 'ﬄ',
   'SP': '␠', 'NUL': '␀', 'DLE': '␐', 'SOH': '␁', 'DC1': '␑', 'DEL': '␡',
   'll': '𐤚', 'lll': '𐤛', 'uu': 'ﬓ', 'uo': 'ꭣ', 'un': 'տ', 'ue': 'ᵫ',
-  'uh': 'ﬕ', 'IJ': 'Ĳ',   'qp': 'ȹ', 'db': 'ȸ', 'nn': 'm'
+  'uh': 'ﬕ', 'IJ': 'Ĳ',   'qp': 'ȹ', 'db': 'ȸ', 'nn': 'm',
+  'Hb': 'Њ'
 };
 
 // Space compression dictionary
@@ -51,7 +52,15 @@ const nonalphDict = {
 
 // Compounds dictionary
 const compoundsDict = {
-  'th': 'ᵺ'
+  'th': 'ᵺ',
+  'st': 'ﬆ',
+  'du': 'ԃ',
+  'Hu': 'Ƕ',
+  'IC': 'Ѥ',
+  'TI': 'Ҵ',
+  'IO': 'Ю',
+  'io': 'ю',
+  'IA': 'Ѩ'
 };
 
 // Capitals dictionary
@@ -64,7 +73,7 @@ const capitalsDict = {
 const cjkcompDict = {
   'MG': '㎎',  // milligram
   'KG': '㎏',  // kilogram
-  'KM': '㎞',  // kilometer
+  'KM': '喽',  // kilometer
   'ML': '㎖',  // milliliter
   'CD': '㏄',  // cubic centimeter
   'LTD': '㋏', // limited (the "fix character")
@@ -86,7 +95,6 @@ const cjkcompDict = {
   'AM': '㉜',  // ante meridiem
   'PM': '㉟',  // post meridiem
   'WC': '㏜',  // water closet
-  'HA': '㋃',  // hectare
   'DB': '㍴',  // decade
   'PR': '㍷'   // percent
 };
@@ -117,7 +125,7 @@ const emojifyDict = {
 const wrds2symDict = {
   'equals': '=', 'equals to': '=', 'plus': '+', 'minus': '-', 'dash': '-',
   'times': '×', 'divided by': '÷', 'percent': '%',
-  'and': '&', 'at': '@', 'dollar': '$', 'pound': '£',
+  'and': '&', 'dollar': '$', 'pound': '£',
   'number': '#', 'hash': '#', 'star': '*', 'asterisk': '*',
   'question': '?', 'exclamation mark': '!'
 };
@@ -289,49 +297,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateCompression() {
     const text = inputText.value;
-    const limitEnabled = charLimitEnabled.checked;
-    const limit = limitEnabled ? parseInt(charLimit.value, 10) || 2000 : null;
+    const limit = parseInt(charLimit.value, 10) || 0;
 
     let activeCategories = {};
-    let result = compressText(text, activeCategories);
     let appliedCategories = [];
+    let result;
 
-    // If limit is enabled and compressed output exceeds limit,
-    // progressively apply categories (least readability impact first)
-    if (limitEnabled && result.compressedLength > limit) {
-      // Priority: least readability impact first
-      const priorityOrder = [
-        'space',      // 5 spaces → em space (invisible, high compression)
-        'ligatures',  // ae → æ (still very readable)
-        'nonalph',    // 1/2 → ½ (readable)
-        'compounds',  // th → ᵺ (moderate impact)
-        'capitals',   // case variants (moderate)
-        'cjkcomp',    // MG → ㎎ (high impact if not expected)
-        'emojify',    // :cat: → 🐱 (high impact)
-        'wrds2sym',   // equals → = (high impact)
-        'wrds2num',   // one → 1 (very high impact)
-        'addfixchr'   // adds invisible char (minimal visual impact)
-      ];
-
-      for (const catId of priorityOrder) {
-        if (!enabledCategories[catId]) continue;
-        
-        activeCategories[catId] = true;
-        result = compressText(text, activeCategories);
-        appliedCategories.push(catId);
-
-        if (result.compressedLength <= limit) {
-          break; // Achieved target
-        }
-      }
-    } else {
-      // No limit or already under limit — use all enabled categories
+    if (limit === 0) {
+      // Compress everything — apply all enabled categories
       for (const catId of Object.keys(enabledCategories)) {
         if (enabledCategories[catId]) {
           activeCategories[catId] = true;
         }
       }
       result = compressText(text, activeCategories);
+    } else {
+      // Progressive compression to stay under limit
+      result = compressText(text, activeCategories); // Start uncompressed
+
+      if (result.compressedLength > limit) {
+        // Need compression — progressively add categories
+        const priorityOrder = [
+          'space', 'ligatures', 'nonalph', 'compounds', 'capitals', 'cjkcomp',
+          'emojify', 'wrds2sym', 'wrds2num', 'addfixchr'
+        ];
+
+        for (const catId of priorityOrder) {
+          if (!enabledCategories[catId]) continue;
+
+          activeCategories[catId] = true;
+          result = compressText(text, activeCategories);
+          appliedCategories.push(catId);
+
+          if (result.compressedLength <= limit) {
+            break;
+          }
+        }
+      }
     }
 
     // Build highlighted output
@@ -356,54 +358,40 @@ document.addEventListener('DOMContentLoaded', () => {
     if (result.originalLength > 0) {
       const saved = result.originalLength - result.compressedLength;
       const percentSaved = (saved / result.originalLength) * 100;
-      
-      let statusText = `${result.originalLength} chars → ${result.compressedLength} chars | ${percentSaved.toFixed(1)}% smaller`;
-      
-      if (limitEnabled) {
+
+      let statusText = `${result.originalLength} → ${result.compressedLength} chars | ${percentSaved.toFixed(1)}%`;
+
+      if (limit === 0) {
+        statusText += ' | Compress everything';
+      } else {
         statusText += ` | Limit: ${limit}`;
         if (result.compressedLength > limit) {
           statusText += ' (exceeded)';
-        } else if (appliedCategories.length > 0) {
-          statusText += ` | Auto-compressed with ${appliedCategories.length} categories`;
         }
       }
-      
+
       statsText.textContent = statusText;
       compressionProgress.style.width = `${Math.max(0, 100 - percentSaved)}%`;
     } else {
-      statsText.textContent = limitEnabled ? `Limit: ${limit}` : 'No compression';
+      statsText.textContent = limit === 0 ? 'Compress everything' : `Limit: ${limit}`;
       compressionProgress.style.width = '100%';
     }
   }
 
   inputText.addEventListener('input', updateCompression);
 
-  copyBtn.addEventListener('click', () => {
-    const text = outputText.textContent;
-    const originalLabel = copyBtn.textContent;
-
-    const doCopy = () => {
-      copyBtn.textContent = 'Copied!';
-      setTimeout(() => { copyBtn.textContent = originalLabel; }, 2000);
-    };
-
-    const fallback = () => {
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.cssText = 'position:fixed;opacity:0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-    };
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(doCopy).catch(fallback);
-    } else {
-      fallback();
-      doCopy();
-    }
-  });
+  const copyIcon = document.getElementById('copy-icon');
+  if (copyIcon) {
+    copyIcon.addEventListener('click', () => {
+      const text = outputText.textContent;
+      if (text && navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          copyIcon.textContent = '✓';
+          setTimeout(() => { copyIcon.textContent = '📋'; }, 2000);
+        });
+      }
+    });
+  }
 
   categoryToggles.forEach(toggle => {
     toggle.addEventListener('change', () => {

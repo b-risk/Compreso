@@ -12,7 +12,12 @@
 <body>
     <header>
         <h1>Compreso</h1>
-        <button id="theme-toggle" aria-label="Toggle theme">
+        <div class="header-controls">
+            <div class="char-limit-controls">
+                <label for="char-limit">Try not to exceed character amount:</label>
+                <input type="number" id="char-limit" value="0" min="0" max="10000">
+            </div>
+            <button id="theme-toggle" aria-label="Toggle theme">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sun-icon">
                 <circle cx="12" cy="12" r="5"></circle>
                 <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -28,6 +33,7 @@
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
             </svg>
         </button>
+        </div>
     </header>
 
     <main>
@@ -37,7 +43,9 @@
                 <textarea id="input-text" placeholder="Type or paste text here to compress..."></textarea>
             </div>
             <div class="column output-column">
-                <div id="output-text" role="textbox" aria-readonly="true" tabindex="0" aria-label="Compressed output"></div>
+                <div id="output-text" role="textbox" aria-readonly="true" tabindex="0" aria-label="Compressed output">
+                    <button id="copy-icon" type="button" aria-label="Copy compressed text" title="Copy">📋</button>
+                </div>
             </div>
         </section>
 
@@ -47,8 +55,6 @@
             </div>
             <span id="stats-text">0 characters | 0% saved</span>
         </section>
-
-        <button id="copy-btn" type="button" class="editor-copy-btn">Copy Compressed Text</button>
 
         <section id="categories">
             <h2>Compression Categories</h2>
@@ -121,14 +127,7 @@
     </main>
 
     <footer>
-        <div class="char-limit-controls">
-            <label for="char-limit">Character limit:</label>
-            <input type="number" id="char-limit" value="2000" min="1" max="10000">
-            <label for="char-limit-enabled" class="toggle-label">
-                <input type="checkbox" id="char-limit-enabled">
-                <span>Enable limit</span>
-            </label>
-        </div>
+        <p>Compreso - Unicode Text Compressor</p>
     </footer>
 
     <script src="script.js" defer></script>
