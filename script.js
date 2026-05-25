@@ -384,48 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setTheme(getPreferredTheme());
 
-  function updateCompression() {
-    const text = inputText.value;
-    const limit = parseInt(charLimit.value, 10) || 0;
-
-    let activeCategories = {};
-    let appliedCategories = [];
-    let result;
-
-    if (limit === 0) {
-      // Compress everything — apply all enabled categories
-      for (const catId of Object.keys(enabledCategories)) {
-        if (enabledCategories[catId]) {
-          activeCategories[catId] = true;
-        }
-      }
-      result = compressText(text, activeCategories);
-    } else {
-      // Progressive compression to stay under limit
-      result = compressText(text, activeCategories); // Start uncompressed
-
-      if (result.compressedLength > limit) {
-        // Need compression — progressively add categories
-        const priorityOrder = [
-          'space', 'ligatures', 'nonalph', 'compounds', 'capitals', 'cjkcomp',
-          'emojify', 'wrds2sym', 'wrds2num', 'addfixchr'
-        ];
-
-        for (const catId of priorityOrder) {
-          if (!enabledCategories[catId]) continue;
-
-          activeCategories[catId] = true;
-          result = compressText(text, activeCategories);
-          appliedCategories.push(catId);
-
-          if (result.compressedLength <= limit) {
-            break;
-          }
-        }
-      }
-    }
-
-    // Build highlighted output
+function displayResult(result, limit) {
     let highlighted = '';
     const compressed = result.compressed;
     const changes = result.changes;
@@ -443,14 +402,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     outputText.innerHTML = highlighted;
 
-    // Update stats
     if (result.originalLength > 0) {
       const saved = result.originalLength - result.compressedLength;
       const percentSaved = (saved / result.originalLength) * 100;
 
       let statusText = `${result.originalLength} → ${result.compressedLength} chars | ${percentSaved.toFixed(1)}%`;
 
-      if (limit === 0) {
+      if (!limit || limit === 0) {
         statusText += ' | Compress everything';
       } else {
         statusText += ` | Limit: ${limit}`;
@@ -460,11 +418,84 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       statsText.textContent = statusText;
-      compressionProgress.style.width = `${Math.max(0, 100 - percentSaved)}%`;
+      compressionProgress.style.width = `${Math.min(Math.max(percentSaved, 0), 100)}%`;
     } else {
-      statsText.textContent = limit === 0 ? 'Compress everything' : `Limit: ${limit}`;
+      statsText.textContent = !limit || limit === 0 ? 'Compress everything' : `Limit: ${limit}`;
       compressionProgress.style.width = '100%';
     }
+  }
+
+  function updateCompression() {
+    const text = inputText.value;
+    const limit = parseInt(charLimit.value, 10) || 0;
+    const limitEnabled = limit > 0;
+
+    if (!limitEnabled || !text) {
+      const activeCategories = {};
+      for (const catId of Object.keys(enabledCategories)) {
+        if (enabledCategories[catId]) activeCategories[catId] = true;
+      }
+      const result = compressText(text, activeCategories);
+      displayResult(result, limitEnabled ? limit : null);
+      return;
+    }
+
+    if (text.length <= limit) {
+      displayResult({compressed: text, originalLength: text.length, compressedLength: text.length, changes: []}, limit);
+      return;
+    }
+
+    const allReplacements = [];
+    const categoryPriority = ['space', 'ligatures', 'nonalph', 'compounds', 'cjkcomp', 'emojify', 'wrds2sym', 'wrds2num', 'addfixchr'];
+
+    for (const catId of categoryPriority) {
+      if (!enabledCategories[catId]) continue;
+
+      let dict = {};
+      switch(catId) {
+        case 'ligatures': Object.assign(dict, ligatureDict); break;
+        case 'compounds': Object.assign(dict, compoundsDict); break;
+        case 'nonalph': Object.assign(dict, nonalphDict); break;
+        case 'cjkcomp': Object.assign(dict, cjkcompDict); break;
+        case 'emojify': Object.assign(dict, emojifyDict); break;
+        case 'wrds2sym': Object.assign(dict, wrds2symDict); break;
+        case 'space': Object.assign(dict, spaceDict); break;
+      }
+
+      for (const [key, value] of Object.entries(dict)) {
+        if (text.includes(key)) {
+          allReplacements.push({key, value, category: catId, length: key.length});
+        }
+      }
+    }
+
+    allReplacements.sort((a, b) => b.length - a.length);
+
+    let currentText = text;
+    const applied = [];
+
+    for (const repl of allReplacements) {
+      if (currentText.length <= limit) break;
+      if (!currentText.includes(repl.key)) continue;
+
+      currentText = currentText.replaceAll(repl.key, repl.value);
+      applied.push(repl);
+
+      if (currentText.length <= limit) break;
+    }
+
+    if (enabledCategories['addfixchr'] && applied.length > 0) {
+      currentText = addfixchrPrefix + currentText;
+    }
+
+    const result = {
+      compressed: currentText,
+      originalLength: text.length,
+      compressedLength: currentText.length,
+      changes: applied.map(r => ({from: r.key, to: r.value}))
+    };
+
+    displayResult(result, limit);
   }
 
   inputText.addEventListener('input', updateCompression);
@@ -475,8 +506,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const text = outputText.textContent;
       if (text && navigator.clipboard) {
         navigator.clipboard.writeText(text).then(() => {
-          copyIcon.textContent = '✓';
-          setTimeout(() => { copyIcon.textContent = '📋'; }, 2000);
+          copyIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline point="20 6 9 17 4 12"></polyline></svg>';
+          setTimeout(() => {
+            copyIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+          }, 2000);
         });
       }
     });

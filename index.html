@@ -43,8 +43,14 @@
                 <textarea id="input-text" placeholder="Type or paste text here to compress..."></textarea>
             </div>
             <div class="column output-column">
-                <div id="output-text" role="textbox" aria-readonly="true" tabindex="0" aria-label="Compressed output">
-                    <button id="copy-icon" type="button" aria-label="Copy compressed text" title="Copy">📋</button>
+                <div class="output-wrapper">
+                    <div id="output-text" role="textbox" aria-readonly="true" tabindex="0" aria-label="Compressed output"></div>
+                    <button id="copy-icon" type="button" aria-label="Copy compressed text" title="Copy to clipboard">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </section>
@@ -81,10 +87,10 @@
                     </label>
                 </div>
                 <div class="category-card">
-                    <input type="checkbox" id="capitals" class="category-toggle">
+                    <input type="checkbox" id="capitals" class="category-toggle" checked>
                     <label for="capitals">
-                        <span class="category-name">Capitals</span>
-                        <span class="category-desc">Ignore capitals when replacing characters with no alternatives.</span>
+                        <span class="category-name">Case Sensitivity</span>
+                        <span class="category-desc">When enabled, only exact case matches. When disabled, tries lowercase variants.</span>
                     </label>
                 </div>
                 <div class="category-card">
