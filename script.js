@@ -237,14 +237,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function getPreferredTheme() {
-    const stored = localStorage.getItem('compreso-theme');
-    if (stored) return stored;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
 
   function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('compreso-theme', theme);
     const sunIcon = document.querySelector('.sun-icon');
     const moonIcon = document.querySelector('.moon-icon');
     if (sunIcon && moonIcon) {
@@ -272,7 +269,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const result = compressText(text, enabledCategories);
-    outputText.textContent = result.compressed;
+
+    // Build highlighted output
+    let highlighted = '';
+    const compressed = result.compressed;
+    const changes = result.changes;
+
+    // Create a set of replacement values for quick lookup
+    const replacementValues = new Set(changes.map(c => c.to));
+
+    // Iterate through compressed text and highlight replaced characters
+    // Since replacements can be multi-character Unicode, we need to identify
+    // which segments were replacements
+
+    // Simple approach: highlight all non-ASCII characters
+    for (let i = 0; i < compressed.length; i++) {
+      const char = compressed[i];
+      const code = char.charCodeAt(0);
+      // Highlight if char is outside basic ASCII and is a known replacement
+      if (code > 127 && replacementValues.has(char)) {
+        highlighted += '<mark>' + char + '</mark>';
+      } else {
+        highlighted += char;
+      }
+    }
+
+    outputText.innerHTML = highlighted;
 
     if (result.originalLength > 0) {
       const saved = result.originalLength - result.compressedLength;
