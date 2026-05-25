@@ -276,6 +276,7 @@ main {
 textarea#input-text {
   width: 100%;
   min-height: 200px;
+  max-height: 600px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   padding: var(--spacing-md);
@@ -330,12 +331,16 @@ textarea#input-text {
 .output-wrapper {
     position: relative;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+    max-height: 600px;
+    overflow: hidden;
 }
 
 #output-text {
     width: 100%;
-    min-height: 200px;
-    max-height: 400px;
+    flex: 1;
     overflow: auto;
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);

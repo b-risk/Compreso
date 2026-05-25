@@ -107,7 +107,7 @@ const cjkcompDict = {
 };
 
 // Add Fix Chr (experimental prefix)
-const addfixchrPrefix = '\u200C';  // Zero-width non-joiner prepended to text
+const addfixchrPrefix = '㋏';  // ㋏ - visible fix character prepended to text
 
 // Emojify dictionary (GitHub-style shortcodes - 100+ entries)
 const emojifyDict = {
@@ -277,8 +277,25 @@ function compressText(input, enabledCategories) {
     Object.assign(activeDict, nonalphDict);
   }
 
+  if (enabledCategories['cjkcomp']) {
+    Object.assign(activeDict, cjkcompDict);
+  }
+
+  if (enabledCategories['emojify']) {
+    Object.assign(activeDict, emojifyDict);
+  }
+
+  if (enabledCategories['wrds2sym']) {
+    Object.assign(activeDict, wrds2symDict);
+  }
+
+  // Space compression
+  if (enabledCategories['ligatures']) {
+    Object.assign(activeDict, spaceDict);
+  }
+
+  // Case sensitivity logic moved to AFTER all dicts assembled
   if (!enabledCategories['capitals']) {
-    // Case sensitivity OFF: add both case variants for matching
     const variantDict = {};
     for (const [key, value] of Object.entries(activeDict)) {
       if (key === key.toUpperCase() && key !== key.toLowerCase() && !activeDict[key.toLowerCase()]) {
@@ -289,10 +306,6 @@ function compressText(input, enabledCategories) {
       }
     }
     Object.assign(activeDict, variantDict);
-  }
-
-  if (enabledCategories['cjkcomp']) {
-    Object.assign(activeDict, cjkcompDict);
   }
 
   // Wrds2Num - apply before dictionary replacement
@@ -501,7 +514,7 @@ function displayResult(result, limit) {
       if (currentText.length <= limit) break;
     }
 
-    if (enabledCategories['addfixchr'] && applied.length > 0) {
+    if (enabledCategories['addfixchr']) {
       currentText = addfixchrPrefix + currentText;
     }
 
@@ -519,7 +532,8 @@ function displayResult(result, limit) {
 
   const resizeObserver = new ResizeObserver(entries => {
     for (const entry of entries) {
-      outputText.style.height = entry.target.style.height || 'auto';
+      const newHeight = entry.contentRect.height + 'px';
+      outputText.style.height = newHeight;
     }
   });
   resizeObserver.observe(inputText);
@@ -530,7 +544,7 @@ function displayResult(result, limit) {
       const text = outputText.textContent;
       if (text && navigator.clipboard) {
         navigator.clipboard.writeText(text).then(() => {
-          copyIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline point="20 6 9 17 4 12"></polyline></svg>';
+          copyIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
           setTimeout(() => {
             copyIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
           }, 2000);
