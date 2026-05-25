@@ -38,12 +38,15 @@ const spaceDict = {
   '  ': ' '      // 2 spaces → en space (U+2002)
 };
 
-// Non-alphabetic dictionary (fractions + math symbols)
+// Non-alphabetic dictionary (fractions + math symbols + combined punctuation)
 const nonalphDict = {
   '1/2': '½', '1/3': '⅓', '2/3': '⅔', '1/4': '¼', '3/4': '¾',
   '1/5': '⅕', '2/5': '⅖', '3/5': '⅗', '4/5': '⅘',
   '1/6': '⅙', '5/6': '⅚', '1/8': '⅛', '3/8': '⅜', '5/8': '⅝', '7/8': '⅞',
-  '1/7': '⅐', '1/9': '⅑', '1/10': '⅒', '0/3': '↉'
+  '1/7': '⅐', '1/9': '⅑', '1/10': '⅒', '0/3': '↉',
+  '!!': '‼',   // double exclamation
+  '!?': '⁉',   // interrobang
+  '?!': '⁈'    // question exclamation
 };
 
 // Compounds dictionary
@@ -57,9 +60,35 @@ const compoundsDict = {
 const capitalsDict = {
 };
 
-// CJK Comp dictionary (simplified CJK combined characters)
+// CJK Comp dictionary (CJK compatibility characters - uppercase keys for case-insensitive matching)
 const cjkcompDict = {
-  'ka': 'か', 'ki': 'き', 'ku': 'く', 'ke': 'け', 'ko': 'こ'
+  'MG': '㎎',  // milligram
+  'KG': '㎏',  // kilogram
+  'KM': '㎞',  // kilometer
+  'ML': '㎖',  // milliliter
+  'CD': '㏄',  // cubic centimeter
+  'LTD': '㋏', // limited (the "fix character")
+  'HV': '㋦',  // hectovolt
+  'PA': '㍶',  // pascal
+  'AU': '㍳',  // astronomical unit
+  'MM': '㎟',  // square millimeter
+  'CM': '㎠',  // square centimeter
+  'DM': '㎗',  // deciliter
+  'KL': '㎅',  // kilobyte
+  'MB': '㏔',  // megabyte
+  'GB': '㏊',  // gigabyte
+  'TB': '㏙',  // tablespoon
+  'MS': '㎳',  // millisecond
+  'NS': '㎱',  // nanosecond
+  'PS': '㎰',  // picosecond
+  'FS': '㎙',  // femtosecond
+  'AS': '㍱',  // atmosphere
+  'AM': '㉜',  // ante meridiem
+  'PM': '㉟',  // post meridiem
+  'WC': '㏜',  // water closet
+  'HA': '㋃',  // hectare
+  'DB': '㍴',  // decade
+  'PR': '㍷'   // percent
 };
 
 // Add Fix Chr dictionary (experimental prefix)
@@ -259,35 +288,61 @@ document.addEventListener('DOMContentLoaded', () => {
   setTheme(getPreferredTheme());
 
   function updateCompression() {
-    let text = inputText.value;
+    const text = inputText.value;
+    const limitEnabled = charLimitEnabled.checked;
+    const limit = limitEnabled ? parseInt(charLimit.value, 10) || 2000 : null;
 
-    if (charLimitEnabled.checked && charLimit.value) {
-      const limit = parseInt(charLimit.value, 10);
-      if (!isNaN(limit) && text.length > limit) {
-        text = text.substring(0, limit);
-        inputText.value = text;
+    let activeCategories = {};
+    let result = compressText(text, activeCategories);
+    let appliedCategories = [];
+
+    // If limit is enabled and compressed output exceeds limit,
+    // progressively apply categories (least readability impact first)
+    if (limitEnabled && result.compressedLength > limit) {
+      // Priority: least readability impact first
+      const priorityOrder = [
+        'space',      // 5 spaces → em space (invisible, high compression)
+        'ligatures',  // ae → æ (still very readable)
+        'nonalph',    // 1/2 → ½ (readable)
+        'compounds',  // th → ᵺ (moderate impact)
+        'capitals',   // case variants (moderate)
+        'cjkcomp',    // MG → ㎎ (high impact if not expected)
+        'emojify',    // :cat: → 🐱 (high impact)
+        'wrds2sym',   // equals → = (high impact)
+        'wrds2num',   // one → 1 (very high impact)
+        'addfixchr'   // adds invisible char (minimal visual impact)
+      ];
+
+      for (const catId of priorityOrder) {
+        if (!enabledCategories[catId]) continue;
+        
+        activeCategories[catId] = true;
+        result = compressText(text, activeCategories);
+        appliedCategories.push(catId);
+
+        if (result.compressedLength <= limit) {
+          break; // Achieved target
+        }
       }
+    } else {
+      // No limit or already under limit — use all enabled categories
+      for (const catId of Object.keys(enabledCategories)) {
+        if (enabledCategories[catId]) {
+          activeCategories[catId] = true;
+        }
+      }
+      result = compressText(text, activeCategories);
     }
-
-    const result = compressText(text, enabledCategories);
 
     // Build highlighted output
     let highlighted = '';
     const compressed = result.compressed;
     const changes = result.changes;
-
-    // Create a set of replacement values for quick lookup
     const replacementValues = new Set(changes.map(c => c.to));
 
-    // Iterate through compressed text and highlight replaced characters
-    // Since replacements can be multi-character Unicode, we need to identify
-    // which segments were replacements
-
-    // Simple approach: highlight all non-ASCII characters
     for (let i = 0; i < compressed.length; i++) {
       const char = compressed[i];
       const code = char.charCodeAt(0);
-      // Highlight if char is outside basic ASCII and is a known replacement
       if (code > 127 && replacementValues.has(char)) {
         highlighted += '<mark>' + char + '</mark>';
       } else {
@@ -297,13 +352,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     outputText.innerHTML = highlighted;
 
+    // Update stats
     if (result.originalLength > 0) {
       const saved = result.originalLength - result.compressedLength;
       const percentSaved = (saved / result.originalLength) * 100;
-      statsText.textContent = `${result.originalLength} chars → ${result.compressedLength} chars | ${percentSaved.toFixed(1)}% smaller`;
+      
+      let statusText = `${result.originalLength} chars → ${result.compressedLength} chars | ${percentSaved.toFixed(1)}% smaller`;
+      
+      if (limitEnabled) {
+        statusText += ` | Limit: ${limit}`;
+        if (result.compressedLength > limit) {
+          statusText += ' (exceeded)';
+        } else if (appliedCategories.length > 0) {
+          statusText += ` | Auto-compressed with ${appliedCategories.length} categories`;
+        }
+      }
+      
+      statsText.textContent = statusText;
       compressionProgress.style.width = `${Math.max(0, 100 - percentSaved)}%`;
     } else {
-      statsText.textContent = 'No compression';
+      statsText.textContent = limitEnabled ? `Limit: ${limit}` : 'No compression';
       compressionProgress.style.width = '100%';
     }
   }

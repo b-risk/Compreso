@@ -48,6 +48,8 @@
             <span id="stats-text">0 characters | 0% saved</span>
         </section>
 
+        <button id="copy-btn" type="button" class="editor-copy-btn">Copy Compressed Text</button>
+
         <section id="categories">
             <h2>Compression Categories</h2>
             <div class="category-grid">
@@ -83,7 +85,7 @@
                     <input type="checkbox" id="cjkcomp" class="category-toggle">
                     <label for="cjkcomp">
                         <span class="category-name">CJK Comp</span>
-                        <span class="category-desc">Combined characters that may not render correctly like ligatures.</span>
+                        <span class="category-desc">CJK compatibility characters that look like Latin letters (e.g., 'MG' → '㎎'). Works with Capitals for case-insensitive matching.</span>
                     </label>
                 </div>
                 <div class="category-card">
@@ -119,7 +121,6 @@
     </main>
 
     <footer>
-        <button id="copy-btn" type="button">Copy Compressed Text</button>
         <div class="char-limit-controls">
             <label for="char-limit">Character limit:</label>
             <input type="number" id="char-limit" value="2000" min="1" max="10000">

@@ -452,6 +452,11 @@ mark,
 /* ============================================
    COPY BUTTON
    ============================================ */
+.editor-copy-btn {
+    margin: 1rem auto;
+    display: block;
+    max-width: 300px;
+}
 #copy-btn {
   background: var(--accent);
   color: #ffffff;
