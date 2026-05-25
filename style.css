@@ -54,6 +54,22 @@
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
+/* ---- Light Theme (explicit) ---- */
+[data-theme="light"] {
+  --bg: #ffffff;
+  --text: #1a1a2e;
+  --accent: #6c63ff;
+  --card-bg: #f5f5ff;
+  --border: #e0e0f0;
+  --highlight: #fff3cd;
+  --success: #28a745;
+  --warning: #ffc107;
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+}
+
 /* ---- System Preference Fallback ---- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
@@ -286,6 +302,30 @@ textarea#input-text:focus {
   box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.15);
 }
 
+/* Custom scrollbar for textarea */
+textarea#input-text::-webkit-scrollbar {
+  width: 8px;
+}
+
+textarea#input-text::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+textarea#input-text::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+textarea#input-text::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Firefox */
+textarea#input-text {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
 /* ---- Output Area ---- */
 .output-wrapper {
     position: relative;
@@ -295,6 +335,8 @@ textarea#input-text:focus {
 #output-text {
     width: 100%;
     min-height: 200px;
+    max-height: 400px;
+    overflow: auto;
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
     padding: var(--spacing-md);

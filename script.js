@@ -352,7 +352,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const outputText = document.getElementById('output-text');
   const compressionProgress = document.getElementById('compression-progress');
   const statsText = document.getElementById('stats-text');
-  const copyBtn = document.getElementById('copy-btn');
   const themeToggle = document.getElementById('theme-toggle');
   const charLimit = document.getElementById('char-limit');
   const charLimitEnabled = document.getElementById('char-limit-enabled');
@@ -401,6 +400,12 @@ function displayResult(result, limit) {
     }
 
     outputText.innerHTML = highlighted;
+
+    if (result.compressed.startsWith(addfixchrPrefix)) {
+      outputText.style.borderLeft = '3px solid var(--accent)';
+    } else {
+      outputText.style.borderLeft = 'none';
+    }
 
     if (result.originalLength > 0) {
       const saved = result.originalLength - result.compressedLength;
@@ -478,7 +483,7 @@ function displayResult(result, limit) {
       if (currentText.length <= limit) break;
       if (!currentText.includes(repl.key)) continue;
 
-      currentText = currentText.replaceAll(repl.key, repl.value);
+      currentText = currentText.replace(repl.key, repl.value);
       applied.push(repl);
 
       if (currentText.length <= limit) break;
