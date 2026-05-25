@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compreso - Unicode Text Compressor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Compreso</h1>
+        <button id="theme-toggle" aria-label="Toggle theme">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sun-icon">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="moon-icon">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        </button>
+    </header>
+
+    <main>
+        <section id="editor" class="two-column">
+            <div class="column input-column">
+                <label for="input-text" class="sr-only">Input text</label>
+                <textarea id="input-text" placeholder="Type or paste text here to compress..."></textarea>
+            </div>
+            <div class="column output-column">
+                <label for="output-text" class="sr-only">Compressed output</label>
+                <div id="output-text" role="textbox" aria-readonly="true"></div>
+            </div>
+        </section>
+
+        <section id="stats-bar">
+            <div class="progress-container">
+                <div id="compression-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+            </div>
+            <span id="stats-text">0 characters | 0% saved</span>
+        </section>
+
+        <section id="categories">
+            <h2>Compression Categories</h2>
+            <div class="category-grid">
+                <div class="category-card">
+                    <input type="checkbox" id="ligatures" class="category-toggle" checked>
+                    <label for="ligatures">
+                        <span class="category-name">Ligatures</span>
+                        <span class="category-desc">Combined characters, example: ae >> æ (Recommended).</span>
+                    </label>
+                </div>
+                <div class="category-card">
+                    <input type="checkbox" id="compounds" class="category-toggle">
+                    <label for="compounds">
+                        <span class="category-name">Compounds</span>
+                        <span class="category-desc">Combined characters with minor defect(s), example: th >> ᵺ (Recommended with larger text).</span>
+                    </label>
+                </div>
+                <div class="category-card">
+                    <input type="checkbox" id="nonalph" class="category-toggle" checked>
+                    <label for="nonalph">
+                        <span class="category-name">Non-alphabetic</span>
+                        <span class="category-desc">Non-alphabetical combined characters. example 1. 2/3 >> ⅔ (Recommended).</span>
+                    </label>
+                </div>
+                <div class="category-card">
+                    <input type="checkbox" id="capitals" class="category-toggle">
+                    <label for="capitals">
+                        <span class="category-name">Capitals</span>
+                        <span class="category-desc">Ignore capitals when replacing characters with no alternatives.</span>
+                    </label>
+                </div>
+                <div class="category-card">
+                    <input type="checkbox" id="cjkcomp" class="category-toggle">
+                    <label for="cjkcomp">
+                        <span class="category-name">CJK Comp</span>
+                        <span class="category-desc">Combined characters that may not render correctly like ligatures.</span>
+                    </label>
+                </div>
+                <div class="category-card">
+                    <input type="checkbox" id="addfixchr" class="category-toggle">
+                    <label for="addfixchr">
+                        <span class="category-name">Add Fix Chr</span>
+                        <span class="category-desc">[EXPERIMENTAL] Adds a special character at the start of the text.</span>
+                    </label>
+                </div>
+                <div class="category-card">
+                    <input type="checkbox" id="emojify" class="category-toggle" checked>
+                    <label for="emojify">
+                        <span class="category-name">Emojify</span>
+                        <span class="category-desc">Replaces formatted words with emojis, example: ':cat2:' >> 🐱</span>
+                    </label>
+                </div>
+                <div class="category-card">
+                    <input type="checkbox" id="wrds2sym" class="category-toggle" checked>
+                    <label for="wrds2sym">
+                        <span class="category-name">Wrds2Sym</span>
+                        <span class="category-desc">Converts words into symbols, example: 'equals' >> =</span>
+                    </label>
+                </div>
+                <div class="category-card">
+                    <input type="checkbox" id="wrds2num" class="category-toggle">
+                    <label for="wrds2num">
+                        <span class="category-name">Wrds2Num</span>
+                        <span class="category-desc">[EXPERIMENTAL] Converts given text input into numbers.</span>
+                    </label>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <button id="copy-btn" type="button">Copy Compressed Text</button>
+        <div class="char-limit-controls">
+            <label for="char-limit">Character limit:</label>
+            <input type="number" id="char-limit" value="2000" min="1" max="10000">
+            <label for="char-limit-enabled" class="toggle-label">
+                <input type="checkbox" id="char-limit-enabled">
+                <span>Enable limit</span>
+            </label>
+        </div>
+    </footer>
+
+    <script src="script.js" defer></script>
+</body>
+</html>
