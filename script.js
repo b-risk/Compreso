@@ -51,9 +51,10 @@ const compoundsDict = {
   'th': 'ᵺ'
 };
 
-// Capitals dictionary (case-insensitive replacements)
+// Capitals dictionary
+// Capitals feature dynamically generates case variants of active dictionary keys
+// No static mappings needed
 const capitalsDict = {
-  'ev': '…'
 };
 
 // CJK Comp dictionary (simplified CJK combined characters)
@@ -318,18 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => { copyBtn.textContent = originalLabel; }, 2000);
     };
 
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(doCopy).catch(() => {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.cssText = 'position:fixed;opacity:0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        doCopy();
-      });
-    } else {
+    const fallback = () => {
       const textarea = document.createElement('textarea');
       textarea.value = text;
       textarea.style.cssText = 'position:fixed;opacity:0';
@@ -337,6 +327,12 @@ document.addEventListener('DOMContentLoaded', () => {
       textarea.select();
       document.execCommand('copy');
       document.body.removeChild(textarea);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(doCopy).catch(fallback);
+    } else {
+      fallback();
       doCopy();
     }
   });
