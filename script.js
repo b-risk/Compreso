@@ -504,14 +504,18 @@ function displayResult(result, limit) {
     let currentText = text;
     const applied = [];
 
-    for (const repl of allReplacements) {
-      if (currentText.length <= limit) break;
-      if (!currentText.includes(repl.key)) continue;
-
-      currentText = currentText.replace(repl.key, repl.value);
-      applied.push(repl);
-
-      if (currentText.length <= limit) break;
+    // Keep applying replacements one at a time until under limit
+    while (currentText.length > limit) {
+      let foundAny = false;
+      for (const repl of allReplacements) {
+        if (currentText.includes(repl.key)) {
+          currentText = currentText.replace(repl.key, repl.value);
+          applied.push(repl);
+          foundAny = true;
+          break; // Check if under limit now
+        }
+      }
+      if (!foundAny) break; // No more replacements possible
     }
 
     if (enabledCategories['addfixchr']) {
